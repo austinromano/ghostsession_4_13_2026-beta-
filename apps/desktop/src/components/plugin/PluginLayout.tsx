@@ -211,7 +211,7 @@ export default function PluginLayout() {
   const vizMode = vizModes[vizModeIdx];
   const [isBeatView, setIsBeatView] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
-  const [trackZoom, setTrackZoom] = useState<'full' | 'half'>('half');
+  const [trackZoom, setTrackZoom] = useState<'full' | 'half'>('full');
   const [headerSpeaking, setHeaderSpeaking] = useState(false);
   const [onlineActivity, setOnlineActivity] = useState<Map<string, OnlineUser>>(new Map());
   const [showNotifs, setShowNotifs] = useState(false);
