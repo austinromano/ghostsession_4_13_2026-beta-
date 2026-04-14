@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useSessionStore } from '../../stores/sessionStore';
 import { useAuthStore } from '../../stores/authStore';
+import Avatar from '../common/Avatar';
 import {
   getSocket,
   sendWebRTCOffer,
@@ -391,33 +392,57 @@ export default function ChatPanel() {
           </div>
         )}
         {(() => {
-          const reversed = [...chatMessages].reverse();
-          return reversed.map((msg, i) => {
-            const origIndex = chatMessages.length - 1 - i;
+          const fmtTime = (ts: number) => new Date(ts).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit' });
+          return chatMessages.map((msg, origIndex) => {
+            const isOwn = msg.userId === userId;
+            const sender = onlineUsers.find((u) => u.userId === msg.userId);
+            const isGif = msg.text.startsWith('[gif]') && msg.text.endsWith('[/gif]');
+            // Determine if previous message was from same user (group messages)
+            const prev = origIndex > 0 ? chatMessages[origIndex - 1] : null;
+            const sameAsPrev = prev && prev.userId === msg.userId && msg.timestamp - prev.timestamp < 5 * 60 * 1000;
+
             return (
-            <div key={origIndex} className="group hover:bg-white/[0.03] -mx-3 px-3 py-1.5 rounded transition-colors relative">
-              <p className="text-[11px] font-semibold mb-0.5" style={{ color: msg.colour }}>{msg.displayName}</p>
-              {msg.text.startsWith('[gif]') && msg.text.endsWith('[/gif]') ? (
-                <img src={msg.text.slice(5, -6)} alt="GIF" className="rounded-lg max-w-[200px] max-h-[150px] mt-1" loading="lazy" />
-              ) : (
-                <p className="text-[13px] leading-[1.4] text-ghost-text-secondary">{msg.text}</p>
-              )}
-              {msg.userId === userId && (
-                <button
-                  onClick={() => deleteMessage(origIndex)}
-                  className="absolute top-1 right-1 opacity-0 group-hover:opacity-100 w-5 h-5 flex items-center justify-center rounded text-ghost-text-muted hover:text-ghost-error-red hover:bg-ghost-error-red/10 transition-all"
-                  title="Delete message"
-                >
-                  <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="3 6 5 6 21 6" />
-                    <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
-                  </svg>
-                </button>
-              )}
-            </div>
-          );
+              <div key={origIndex} className={`group relative flex items-end gap-2 ${isOwn ? 'justify-end' : 'justify-start'} ${sameAsPrev ? 'mt-0.5' : 'mt-3'}`}>
+                {!isOwn && (
+                  <div className={`shrink-0 w-8 ${sameAsPrev ? 'invisible' : ''}`}>
+                    <Avatar name={msg.displayName} src={sender?.avatarUrl || null} size="sm" />
+                  </div>
+                )}
+                <div className={`flex flex-col max-w-[75%] ${isOwn ? 'items-end' : 'items-start'}`}>
+                  {isGif ? (
+                    <img src={msg.text.slice(5, -6)} alt="GIF" className="rounded-2xl max-w-[200px] max-h-[150px]" loading="lazy" />
+                  ) : (
+                    <div
+                      className={`px-3 py-2 text-[13px] leading-[1.35] break-words ${
+                        isOwn
+                          ? 'bg-ghost-purple text-white rounded-[18px] rounded-br-md'
+                          : 'bg-white/[0.08] text-ghost-text-primary rounded-[18px] rounded-bl-md'
+                      }`}
+                    >
+                      {msg.text}
+                    </div>
+                  )}
+                  {!sameAsPrev && (
+                    <span className="text-[10px] text-white/30 mt-1 px-2">{fmtTime(msg.timestamp)}</span>
+                  )}
+                </div>
+                {isOwn && (
+                  <button
+                    onClick={() => deleteMessage(origIndex)}
+                    className="absolute top-0 right-1 opacity-0 group-hover:opacity-100 w-5 h-5 flex items-center justify-center rounded text-ghost-text-muted hover:text-ghost-error-red hover:bg-ghost-error-red/10 transition-all"
+                    title="Delete message"
+                  >
+                    <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <polyline points="3 6 5 6 21 6" />
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                    </svg>
+                  </button>
+                )}
+              </div>
+            );
           });
         })()}
+        <div ref={bottomRef} />
       </div>
 
       {/* Chat input — Discord style */}
