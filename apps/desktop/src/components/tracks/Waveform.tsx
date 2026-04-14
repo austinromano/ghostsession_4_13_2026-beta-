@@ -96,28 +96,57 @@ export default memo(function Waveform({
     const mid = h / 2;
     const samplesPerPixel = audioData.length / w;
 
+    // Compute both peak and RMS per column so we can render a two-layer
+    // waveform (peak halo + RMS body) like pro DAWs do.
     const peaks = new Float32Array(w);
+    const rms = new Float32Array(w);
     for (let x = 0; x < w; x++) {
       let max = 0;
+      let sumSq = 0;
+      let count = 0;
       const start = Math.floor(x * samplesPerPixel);
       const end = Math.min(Math.floor((x + 1) * samplesPerPixel), audioData.length);
       for (let j = start; j < end; j++) {
-        const abs = Math.abs(audioData[j]);
+        const v = audioData[j];
+        const abs = v < 0 ? -v : v;
         if (abs > max) max = abs;
+        sumSq += v * v;
+        count++;
       }
       peaks[x] = max;
+      rms[x] = count > 0 ? Math.sqrt(sumSq / count) : 0;
     }
 
-    // Single theme color for all waveforms (ghost purple)
+    const scalePeak = mid * 0.9;
+    const scaleRms = mid * 1.7; // amplify RMS — it's always smaller than peak
+
+    // Peak halo (outer translucent shape)
+    ctx.beginPath();
+    ctx.moveTo(0, mid - peaks[0] * scalePeak);
+    for (let x = 1; x < w; x++) ctx.lineTo(x, mid - peaks[x] * scalePeak);
+    for (let x = w - 1; x >= 0; x--) ctx.lineTo(x, mid + peaks[x] * scalePeak);
+    ctx.closePath();
+    ctx.fillStyle = 'rgba(139, 92, 246, 0.32)';
+    ctx.fill();
+
+    // RMS body (inner solid shape)
+    ctx.beginPath();
+    ctx.moveTo(0, mid - Math.min(rms[0] * scaleRms, peaks[0] * scalePeak));
+    for (let x = 1; x < w; x++) {
+      const top = Math.min(rms[x] * scaleRms, peaks[x] * scalePeak);
+      ctx.lineTo(x, mid - top);
+    }
+    for (let x = w - 1; x >= 0; x--) {
+      const top = Math.min(rms[x] * scaleRms, peaks[x] * scalePeak);
+      ctx.lineTo(x, mid + top);
+    }
+    ctx.closePath();
     ctx.fillStyle = '#8B5CF6';
+    ctx.fill();
 
-    for (let x = 0; x < w; x++) {
-
-      const peakH = peaks[x] * mid * 0.84;
-      if (peakH > 0.5) {
-        ctx.fillRect(x, mid - peakH, 1, peakH * 2);
-      }
-    }
+    // Subtle center reference line
+    ctx.fillStyle = 'rgba(139, 92, 246, 0.18)';
+    ctx.fillRect(0, mid - 0.5, w, 1);
   }, [audioData]);
 
   useEffect(() => {
