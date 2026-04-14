@@ -415,9 +415,10 @@ export default function ChatPanel() {
                     <div
                       className={`px-3 py-2 text-[13px] leading-[1.35] break-words ${
                         isOwn
-                          ? 'bg-ghost-purple text-white rounded-[18px] rounded-br-md'
-                          : 'bg-white/[0.08] text-ghost-text-primary rounded-[18px] rounded-bl-md'
+                          ? 'text-white rounded-[18px] rounded-br-md'
+                          : 'text-ghost-text-primary rounded-[18px] rounded-bl-md'
                       }`}
+                      style={{ background: isOwn ? '#7C3AED' : 'rgba(255,255,255,0.08)' }}
                     >
                       {msg.text}
                     </div>
