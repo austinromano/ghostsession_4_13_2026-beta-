@@ -89,13 +89,15 @@ function LaneClip({ track, selectedProjectId, deleteTrack, trackZoom, laneWidth,
         trackId={track.id}
         showPlayhead={true}
       />
-      {/* Track name + uploader avatar */}
-      <div className="absolute left-2 top-1 z-10 pointer-events-none flex flex-col gap-1 items-start">
-        <p className="text-[10px] font-bold text-white/70 truncate max-w-[120px]">{displayName}</p>
-        <div title={`Added by ${ownerName}`} className="shrink-0">
-          <Avatar name={ownerName} src={owner?.avatarUrl || null} size="xs" />
+      {/* Track name + uploader avatar — only on the first clip in a lane */}
+      {clipIndex === 0 && (
+        <div className="absolute left-2 top-1 z-10 pointer-events-none flex flex-col gap-1 items-start">
+          <p className="text-[10px] font-bold text-white/70 truncate max-w-[120px]">{displayName}</p>
+          <div title={`Added by ${ownerName}`} className="shrink-0">
+            <Avatar name={ownerName} src={owner?.avatarUrl || null} size="xs" />
+          </div>
         </div>
-      </div>
+      )}
       {/* Hover controls */}
       <div className="absolute top-1/2 -translate-y-1/2 right-1 z-20 flex items-center gap-0 opacity-0 group-hover:opacity-100 transition-opacity rounded overflow-hidden" style={{ background: 'rgba(0,0,0,0.7)' }}>
         <button
